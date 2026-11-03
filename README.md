@@ -62,34 +62,30 @@ No per-package Nx config file is needed. Targets are inferred from `package.json
 mise run build   # nx build of all projects, then the backend Docker image
 ```
 
-This produces `backstage:<version>` and `backstage:latest` (set `IMAGE_NAME` to change the name). Nx builds `tsc`, then `app`, then `backend` before running `docker build`.
+The Docker targets come from the [`@nx/docker`](https://nx.dev/technologies/docker) plugin (configured in `nx.json`), which picks up `packages/backend/Dockerfile`. `backend:docker:build` depends on `build`, so Nx builds the plugins, `app` and `backend` first. The local image is called `packages-backend`.
 
 To run the image locally:
 
 ```sh
-docker run --rm -p 7007:7007 backstage:latest
+yarn nx run backend:docker:run   # http://localhost:7007
 ```
 
 ## Releases
 
-Versions come from [Conventional Commits](https://www.conventionalcommits.org) through `nx release`. All packages share one version (fixed release group). Releases happen in GitHub Actions (`.github/workflows/ci.yml`):
+Releases use plain `nx release` with [Conventional Commits](https://www.conventionalcommits.org). All packages share one version (fixed release group), and `@nx/docker` versions and pushes the image to `ghcr.io/jbadeau/backstage`. Releases only run in GitHub Actions (`.github/workflows/ci.yml`):
 
-| Branch                  | Result                                                                                                         |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Protected (e.g. `main`) | Version bump, `CHANGELOG.md`, tag `vX.Y.Z`, GitHub release, image `ghcr.io/<owner>/backstage:X.Y.Z` + `latest` |
-| Any other branch        | Prerelease image only, e.g. `0.2.0-feat-login.42.0` (no commit, tag or `latest`)                               |
+| Branch                  | Command                                                            | Result                                                                    |
+| ----------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Protected (e.g. `main`) | `nx release --yes`                                                 | Version bump, `CHANGELOG.md`, tag `vX.Y.Z`, GitHub release, image `X.Y.Z` |
+| Any other branch        | `nx release version --preid <branch>.<run>` + `nx release publish` | Prerelease image only, e.g. `0.2.0-feat-login.42.0` (no commit or tag)    |
 
-An image is only published if the commits since the last tag call for a new version:
+A release (and image) only happens if the commits since the last tag call for a new version:
 
 - `fix:` → patch
 - `feat:` → minor
 - `feat!:` or `BREAKING CHANGE:` → major
-- `chore:`, `docs:` and similar publish nothing
+- `chore:`, `docs:`, `ci:` and similar release nothing
 
-While the version is `0.x`, Nx moves each bump down one level (minor becomes patch, major becomes minor).
+Only commits that change files in a released package count. While the version is `0.x`, Nx moves each bump down one level (minor becomes patch, major becomes minor).
 
-Preview the next release locally:
-
-```sh
-yarn release:dry-run
-```
+When merging a feature branch, squash-merge or use a non-releasable merge message, so the change appears in the changelog only once.

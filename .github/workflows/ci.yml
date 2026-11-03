@@ -1,7 +1,8 @@
 name: CI
 
-# Protected branches (e.g. main): full release (version, changelog, tag, GitHub release, image + latest)
-# Other branches:                 prerelease image only (e.g. 1.3.0-feat-login.42.0), no commit/tag
+# Releasing is plain `nx release` (config in nx.json, Docker via @nx/docker):
+#   Protected branches (e.g. main): nx release -> version, CHANGELOG.md, tag vX.Y.Z, GitHub release, image X.Y.Z
+#   Other branches:                 nx release version --preid + publish -> image only (e.g. 0.2.0-feat-login.42.0)
 
 on:
   push:
@@ -16,12 +17,6 @@ env:
   NX_NO_CLOUD: true
   # Nx 24 defaults to ~/.nx/<hash>/cache; keep it in the workspace so actions/cache can save it
   NX_CACHE_DIRECTORY: ${{ github.workspace }}/.nx/cache
-  IMAGE_NAME: ghcr.io/jbadeau/backstage
-  # Docker layer cache stored in the registry, shared by all branches
-  DOCKER_BUILD_ARGS: >-
-    --load
-    --cache-from type=registry,ref=ghcr.io/jbadeau/backstage:buildcache
-    --cache-to type=registry,ref=ghcr.io/jbadeau/backstage:buildcache,mode=max
 
 jobs:
   ci:
@@ -29,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      packages: write # docker layer cache in ghcr
     steps:
       - uses: actions/checkout@v7
         with:
@@ -51,7 +46,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: mise run build
+      - name: Build (all projects + docker image)
+        run: mise exec -- yarn nx run backend:docker:build --configuration=ci
 
   publish:
     name: ${{ github.ref_protected && 'Release' || 'Prerelease' }}
@@ -62,12 +58,6 @@ jobs:
       packages: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      BRANCH_NAME: ${{ github.ref_name }}
-      BUILD_NUMBER: ${{ github.run_number }}
-      # Read-only: version bumps change every package.json, so don't overwrite the shared cache
-      DOCKER_BUILD_ARGS: >-
-        --load
-        --cache-from type=registry,ref=ghcr.io/jbadeau/backstage:buildcache
     steps:
       - uses: actions/checkout@v7
         with:
@@ -88,36 +78,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Release (version, changelog, tag, GitHub release)
-        id: release
+      - name: Release
         if: ${{ github.ref_protected }}
-        run: |
-          before="$(node -p "require('./packages/backend/package.json').version")"
-          mise exec -- yarn nx release --skip-publish
-          after="$(node -p "require('./packages/backend/package.json').version")"
-          if [[ "$after" != "$before" ]]; then
-            echo "Released $after"
-            echo "version=$after" >> "$GITHUB_OUTPUT"
-          else
-            echo "No releasable conventional commits; nothing to publish"
-          fi
+        run: mise exec -- yarn nx release --yes
 
-      - name: Prerelease version (no commit/tag)
-        id: prerelease
+      - name: Prerelease
         if: ${{ !github.ref_protected }}
+        env:
+          PREID: ${{ github.ref_name }}.${{ github.run_number }}
         run: |
-          before="$(node -p "require('./packages/backend/package.json').version")"
-          slug="$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')"
-          mise exec -- yarn nx release version --preid "${slug}.${BUILD_NUMBER}" \
-            --git-commit=false --git-tag=false --git-push=false --stage-changes=false
-          after="$(node -p "require('./packages/backend/package.json').version")"
-          if [[ "$after" != "$before" ]]; then
-            echo "Prerelease $after"
-            echo "version=$after" >> "$GITHUB_OUTPUT"
+          preid="$(echo "$PREID" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9.]+/-/g; s/^-+|-+$//g')"
+          mise exec -- yarn nx release version --preid "$preid" --git-commit=false --git-tag=false --stage-changes=false
+          # `nx release version` leaves the version unchanged when no conventional commit calls for a bump
+          version="$(node -p "require('./packages/backend/package.json').version")"
+          if [[ "$version" == *-* ]]; then
+            mise exec -- yarn nx release publish
           else
             echo "No releasable conventional commits; nothing to publish"
           fi
-
-      - name: Push image ${{ steps.release.outputs.version || steps.prerelease.outputs.version }}
-        if: ${{ steps.release.outputs.version || steps.prerelease.outputs.version }}
-        run: mise exec -- yarn push-image

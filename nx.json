@@ -79,7 +79,42 @@
       "commit": true,
       "tag": true,
       "commitMessage": "chore(release): v{version}"
+    },
+    "docker": {
+      "preVersionCommand": "npx nx run-many -t docker:build -c ci",
+      "registryUrl": "ghcr.io",
+      "repositoryName": "jbadeau/backstage",
+      "versionSchemes": {
+        "release": "{versionActionsVersion}"
+      }
     }
   },
-  "maxCacheSize": "500MB"
+  "maxCacheSize": "500MB",
+  "plugins": [
+    {
+      "plugin": "@nx/docker",
+      "options": {
+        "buildTarget": {
+          "name": "docker:build",
+          "cwd": "{workspaceRoot}",
+          "args": ["--file {projectRoot}/Dockerfile"],
+          "configurations": {
+            "ci": {
+              "cwd": "{workspaceRoot}",
+              "args": [
+                "--file {projectRoot}/Dockerfile",
+                "--load",
+                "--cache-from type=registry,ref=ghcr.io/jbadeau/backstage:buildcache",
+                "--cache-to type=registry,ref=ghcr.io/jbadeau/backstage:buildcache,mode=max"
+              ]
+            }
+          }
+        },
+        "runTarget": {
+          "name": "docker:run",
+          "args": ["-p 7007:7007"]
+        }
+      }
+    }
+  ]
 }

@@ -8316,6 +8316,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nx/docker@npm:24.0.3":
+  version: 24.0.3
+  resolution: "@nx/docker@npm:24.0.3"
+  dependencies:
+    "@nx/devkit": "npm:24.0.3"
+    tslib: "npm:^2.3.0"
+  checksum: 10c0/c842e899c64e666fbd7c366ab7c8ca763b3d23577528a00476f6582ddfb708d0be3a326a1405acefb1b846da048f9d23873e464bac376e096a862e74ea0393b5
+  languageName: node
+  linkType: hard
+
 "@nx/js@npm:24.0.3":
   version: 24.0.3
   resolution: "@nx/js@npm:24.0.3"
@@ -29395,6 +29405,7 @@ __metadata:
     "@backstage/cli-defaults": "npm:^0.1.7"
     "@backstage/e2e-test-utils": "npm:^0.1.2"
     "@jest/environment-jsdom-abstract": "npm:^30.5.0"
+    "@nx/docker": "npm:24.0.3"
     "@nx/js": "npm:24.0.3"
     "@playwright/test": "npm:^1.32.3"
     "@types/jest": "npm:^30.0.0"

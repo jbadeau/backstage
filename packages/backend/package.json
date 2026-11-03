@@ -64,30 +64,6 @@
   "nx": {
     "implicitDependencies": [
       "app"
-    ],
-    "targets": {
-      "docker:build": {
-        "executor": "nx:run-commands",
-        "dependsOn": [
-          "build"
-        ],
-        "cache": false,
-        "options": {
-          "cwd": "{workspaceRoot}",
-          "command": "docker build . ${DOCKER_BUILD_ARGS:-} -f packages/backend/Dockerfile -t ${IMAGE_NAME:-backstage}:$(node -p \"require('./packages/backend/package.json').version\") -t ${IMAGE_NAME:-backstage}:latest"
-        }
-      },
-      "docker:push": {
-        "executor": "nx:run-commands",
-        "dependsOn": [
-          "docker:build"
-        ],
-        "cache": false,
-        "options": {
-          "cwd": "{workspaceRoot}",
-          "command": "v=$(node -p \"require('./packages/backend/package.json').version\") && docker push ${IMAGE_NAME:-backstage}:$v && case $v in *-*) echo \"prerelease: skipping latest\" ;; *) docker push ${IMAGE_NAME:-backstage}:latest ;; esac"
-        }
-      }
-    }
+    ]
   }
 }

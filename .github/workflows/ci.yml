@@ -2,7 +2,8 @@ name: CI
 
 # Releasing is plain `nx release` (config in nx.json, Docker via @nx/docker):
 #   Protected branches (e.g. main): nx release -> version, CHANGELOG.md, tag vX.Y.Z, GitHub release, image X.Y.Z
-#   Other branches:                 nx release version --preid + publish -> image only (e.g. 0.2.0-feat-login.42.0)
+#   Other branches:                 nx release version prerelease + publish -> image only on every push
+#                                   (e.g. 0.0.3-feat-login.42.0), no commit, tag, changelog or GitHub release
 
 on:
   push:
@@ -83,17 +84,11 @@ jobs:
         if: ${{ github.ref_protected }}
         run: mise exec -- yarn nx release --yes
 
-      - name: Prerelease
+      - name: Prerelease (image only)
         if: ${{ !github.ref_protected }}
         env:
           PREID: ${{ github.ref_name }}.${{ github.run_number }}
         run: |
           preid="$(echo "$PREID" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9.]+/-/g; s/^-+|-+$//g')"
-          mise exec -- yarn nx release version --preid "$preid" --git-commit=false --git-tag=false --stage-changes=false
-          # `nx release version` leaves the version unchanged when no conventional commit calls for a bump
-          version="$(node -p "require('./packages/backend/package.json').version")"
-          if [[ "$version" == *-* ]]; then
-            mise exec -- yarn nx release publish
-          else
-            echo "No releasable conventional commits; nothing to publish"
-          fi
+          mise exec -- yarn nx release version prerelease --preid "$preid" --git-commit=false --git-tag=false --stage-changes=false
+          mise exec -- yarn nx release publish

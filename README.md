@@ -74,12 +74,12 @@ yarn nx run backend:docker:run   # http://localhost:7007
 
 Releases use plain `nx release` with [Conventional Commits](https://www.conventionalcommits.org). All packages share one version (fixed release group), and `@nx/docker` versions and pushes the image to `ghcr.io/jbadeau/backstage`. Releases only run in GitHub Actions (`.github/workflows/ci.yml`):
 
-| Branch                  | Command                                                            | Result                                                                    |
-| ----------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Protected (e.g. `main`) | `nx release --yes`                                                 | Version bump, `CHANGELOG.md`, tag `vX.Y.Z`, GitHub release, image `X.Y.Z` |
-| Any other branch        | `nx release version --preid <branch>.<run>` + `nx release publish` | Prerelease image only, e.g. `0.2.0-feat-login.42.0` (no commit or tag)    |
+| Branch                  | Command                                                                       | Result                                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Protected (e.g. `main`) | `nx release --yes`                                                            | Version bump, `CHANGELOG.md`, tag `vX.Y.Z`, GitHub release, image `X.Y.Z`                             |
+| Any other branch        | `nx release version prerelease --preid <branch>.<run>` + `nx release publish` | Image only, on every push, e.g. `0.0.3-feat-login.42.0` (no commit, tag, changelog or GitHub release) |
 
-A release (and image) only happens if the commits since the last tag call for a new version:
+On protected branches, a release only happens if the commits since the last tag call for a new version:
 
 - `fix:` → patch
 - `feat:` → minor

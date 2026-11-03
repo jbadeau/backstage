@@ -1,6 +1,6 @@
 {
   "name": "@internal/backstage-plugin-hello-backend",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "UNLICENSED",
   "private": true,
   "main": "src/index.ts",

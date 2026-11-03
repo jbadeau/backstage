@@ -80,5 +80,6 @@
       "tag": true,
       "commitMessage": "chore(release): v{version}"
     }
-  }
+  },
+  "maxCacheSize": "500MB"
 }

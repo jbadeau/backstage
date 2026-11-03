@@ -6464,6 +6464,7 @@ __metadata:
     "@types/supertest": "npm:^2.0.12"
     express: "npm:^4.14.0"
     express-promise-router: "npm:^4.1.0"
+    prettier: "npm:^2.3.2"
     supertest: "npm:^6.2.4"
     typescript: "npm:~5.8.0"
     zod: "npm:^3.25.76 || ^4.0.0"
@@ -6486,6 +6487,7 @@ __metadata:
     "@testing-library/react": "npm:^14.0.0"
     "@testing-library/user-event": "npm:^14.0.0"
     msw: "npm:^2.0.0"
+    prettier: "npm:^2.3.2"
     react: "npm:^16.13.1 || ^17.0.0 || ^18.0.0"
     react-use: "npm:^17.2.4"
     typescript: "npm:~5.8.0"
@@ -14227,6 +14229,7 @@ __metadata:
     "@testing-library/user-event": "npm:^14.0.0"
     "@types/react-dom": "npm:*"
     cross-env: "npm:^7.0.0"
+    prettier: "npm:^2.3.2"
     react: "npm:^18.0.2"
     react-dom: "npm:^18.0.2"
     react-router: "npm:^6.30.2"
@@ -14930,6 +14933,7 @@ __metadata:
     better-sqlite3: "npm:^12.0.0"
     node-gyp: "npm:^10.0.0"
     pg: "npm:^8.11.3"
+    prettier: "npm:^2.3.2"
     typescript: "npm:~5.8.0"
   languageName: unknown
   linkType: soft

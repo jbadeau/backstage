@@ -50,7 +50,7 @@ export const TodoPage = () => {
 
   return (
     <>
-      <Header title="Hello from the Nx monorepo!" />
+      <Header title="Hello from the Nx monorepo, released with nx release!" />
       <Container>
         <TodoList todos={error ? exampleTodos : todos ?? []} />
       </Container>

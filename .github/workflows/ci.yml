@@ -32,9 +32,10 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - name: Lint, type-check and test
+      - name: Lint, format check, type-check and test
         run: |
           mise exec -- yarn lint:all
+          mise exec -- yarn prettier:check
           mise exec -- yarn tsc
           mise exec -- yarn test
 

@@ -40,6 +40,18 @@ runs:
         key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
         restore-keys: yarn-${{ runner.os }}-
 
+    # Installed node_modules incl. built native modules (better-sqlite3, esbuild, swc...).
+    # Exact-match only: keyed on lockfile, manifests and node version (mise.toml).
+    - name: Cache node_modules
+      uses: actions/cache@v6
+      with:
+        path: |
+          node_modules
+          packages/*/node_modules
+          plugins/*/node_modules
+          .yarn/install-state.gz
+        key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'mise.toml', 'package.json', 'packages/*/package.json', 'plugins/*/package.json') }}
+
     # Nx local task cache: saved every run, restored from the latest one
     - name: Cache Nx
       uses: actions/cache@v6

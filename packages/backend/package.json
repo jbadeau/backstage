@@ -74,7 +74,7 @@
         "cache": false,
         "options": {
           "cwd": "{workspaceRoot}",
-          "command": "docker build . -f packages/backend/Dockerfile -t ${IMAGE_NAME:-backstage}:$(node -p \"require('./packages/backend/package.json').version\") -t ${IMAGE_NAME:-backstage}:latest"
+          "command": "docker build . ${DOCKER_BUILD_ARGS:-} -f packages/backend/Dockerfile -t ${IMAGE_NAME:-backstage}:$(node -p \"require('./packages/backend/package.json').version\") -t ${IMAGE_NAME:-backstage}:latest"
         }
       },
       "docker:push": {

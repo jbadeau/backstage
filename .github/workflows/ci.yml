@@ -14,6 +14,8 @@ concurrency:
 
 env:
   NX_NO_CLOUD: true
+  # Nx 24 defaults to ~/.nx/<hash>/cache; keep it in the workspace so actions/cache can save it
+  NX_CACHE_DIRECTORY: ${{ github.workspace }}/.nx/cache
   IMAGE_NAME: ghcr.io/jbadeau/backstage
   # Docker layer cache stored in the registry, shared by all branches
   DOCKER_BUILD_ARGS: >-

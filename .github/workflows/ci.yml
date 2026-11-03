@@ -1,0 +1,145 @@
+name: CI
+
+# Protected branches (e.g. main): full release (version, changelog, tag, GitHub release, image + latest)
+# Other branches:                 prerelease image only (e.g. 1.3.0-feat-login.42.0), no commit/tag
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !github.ref_protected }}
+
+env:
+  NX_NO_CLOUD: true
+
+jobs:
+  ci:
+    name: Lint, test & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install mise
+        run: |
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/share/mise/shims" >> "$GITHUB_PATH"
+
+      - name: Install tools (node, yarn)
+        run: |
+          mise --version
+          mise trust
+          mise install
+          mise ls
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+            .nx/cache
+          key: ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-
+            ${{ runner.os }}-yarn-nx-
+
+      - run: mise run init
+
+      - name: Lint, type-check and test
+        run: |
+          mise exec -- yarn lint:all
+          mise exec -- yarn tsc
+          mise exec -- yarn test
+
+      - run: mise run build
+
+  publish:
+    name: ${{ github.ref_protected && 'Release' || 'Prerelease' }}
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH_NAME: ${{ github.ref_name }}
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install mise
+        run: |
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/share/mise/shims" >> "$GITHUB_PATH"
+
+      - name: Install tools (node, yarn)
+        run: |
+          mise --version
+          mise trust
+          mise install
+          mise ls
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+            .nx/cache
+          key: ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-
+            ${{ runner.os }}-yarn-nx-
+
+      - run: mise run init
+
+      - name: Configure git and image name
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/backstage" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release (version, changelog, tag, GitHub release)
+        id: release
+        if: ${{ github.ref_protected }}
+        run: |
+          before="$(node -p "require('./packages/backend/package.json').version")"
+          mise exec -- yarn nx release --skip-publish --yes
+          after="$(node -p "require('./packages/backend/package.json').version")"
+          if [[ "$after" != "$before" ]]; then
+            echo "Released $after"
+            echo "version=$after" >> "$GITHUB_OUTPUT"
+          else
+            echo "No releasable conventional commits; nothing to publish"
+          fi
+
+      - name: Prerelease version (no commit/tag)
+        id: prerelease
+        if: ${{ !github.ref_protected }}
+        run: |
+          before="$(node -p "require('./packages/backend/package.json').version")"
+          slug="$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')"
+          mise exec -- yarn nx release version --preid "${slug}.${BUILD_NUMBER}" \
+            --git-commit=false --git-tag=false --git-push=false --stage-changes=false
+          after="$(node -p "require('./packages/backend/package.json').version")"
+          if [[ "$after" != "$before" ]]; then
+            echo "Prerelease $after"
+            echo "version=$after" >> "$GITHUB_OUTPUT"
+          else
+            echo "No releasable conventional commits; nothing to publish"
+          fi
+
+      - name: Push image ${{ steps.release.outputs.version || steps.prerelease.outputs.version }}
+        if: ${{ steps.release.outputs.version || steps.prerelease.outputs.version }}
+        run: mise exec -- yarn push-image

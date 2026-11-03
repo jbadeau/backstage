@@ -1,0 +1,76 @@
+{
+  "name": "root",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "22 || 24"
+  },
+  "scripts": {
+    "start": "NODE_OPTIONS=--no-node-snapshot nx run-many -t start -p app backend",
+    "build:backend": "nx run backend:build",
+    "build:all": "nx run-many -t build",
+    "build-image": "nx run backend:docker:build",
+    "tsc": "nx run-many -t tsc",
+    "tsc:full": "tsc --skipLibCheck false --incremental false",
+    "clean": "nx run-many -t clean && rm -rf dist-types .nx/cache",
+    "test": "nx run-many -t test",
+    "test:all": "nx run-many -t test",
+    "test:e2e": "playwright test",
+    "fix": "backstage-cli repo fix",
+    "lint": "nx affected -t lint --base=origin/main",
+    "lint:all": "nx run-many -t lint",
+    "prettier:check": "nx run-many -t prettier:check",
+    "new": "backstage-cli new",
+    "start:backend": "NODE_OPTIONS=--no-node-snapshot nx run backend:start",
+    "build": "nx run-many -t build",
+    "lint:fix": "nx run-many -t lint:fix",
+    "prettier:fix": "nx run-many -t prettier:fix",
+    "push-image": "nx run backend:docker:push",
+    "release": "nx release --skip-publish",
+    "release:dry-run": "nx release --skip-publish --dry-run"
+  },
+  "backstage": {
+    "cli": {
+      "new": {
+        "globals": {
+          "license": "UNLICENSED"
+        }
+      }
+    }
+  },
+  "workspaces": [
+    "packages/*",
+    "plugins/*"
+  ],
+  "devDependencies": {
+    "@backstage/cli": "^0.36.7",
+    "@backstage/cli-defaults": "^0.1.7",
+    "@backstage/e2e-test-utils": "^0.1.2",
+    "@jest/environment-jsdom-abstract": "^30.5.0",
+    "@nx/js": "24.0.3",
+    "@playwright/test": "^1.32.3",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.5.0",
+    "jsdom": "^27.1.0",
+    "node-gyp": "^10.0.0",
+    "nx": "24.0.3",
+    "prettier": "^2.3.2",
+    "typescript": "~5.8.0"
+  },
+  "resolutions": {
+    "@yarnpkg/core": "4.9.1",
+    "@types/react": "^18",
+    "@types/react-dom": "^18"
+  },
+  "prettier": "@backstage/cli/config/prettier",
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "packageManager": "yarn@4.13.0"
+}

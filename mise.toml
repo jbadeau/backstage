@@ -1,0 +1,15 @@
+[tools]
+node = "24.22.2"
+yarn = "latest"
+
+[tasks.init]
+description = "Install dependencies"
+run = "yarn install --immutable"
+
+[tasks.dev]
+description = "Start app and backend in dev mode"
+run = "yarn start"
+
+[tasks.build]
+description = "Build all projects and the backend Docker image"
+run = ["yarn build", "yarn build-image"]

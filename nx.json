@@ -1,0 +1,84 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.json",
+      "{workspaceRoot}/yarn.lock",
+      {
+        "env": "YARN_ENABLE_GLOBAL_CACHE"
+      },
+      {
+        "env": "YARN_ENABLE_IMMUTABLE_CACHE"
+      },
+      {
+        "env": "YARN_ENABLE_MIRROR"
+      },
+      {
+        "env": "YARN_GLOBAL_FOLDER"
+      }
+    ]
+  },
+  "targetDefaults": {
+    "start": {
+      "cache": false,
+      "continuous": true
+    },
+    "build": {
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist"],
+      "dependsOn": ["^build", "tsc"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "test": {
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "lint": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.js"]
+    },
+    "lint:fix": {
+      "cache": false
+    },
+    "prettier:check": {
+      "cache": true
+    },
+    "prettier:fix": {
+      "cache": false
+    },
+    "tsc": {
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{workspaceRoot}/dist-types/{projectRoot}"],
+      "dependsOn": ["^tsc"]
+    }
+  },
+  "analytics": false,
+  "release": {
+    "projects": ["app", "backend", "@internal/*"],
+    "projectsRelationship": "fixed",
+    "releaseTag": {
+      "pattern": "v{version}"
+    },
+    "version": {
+      "conventionalCommits": true
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github",
+        "file": "{workspaceRoot}/CHANGELOG.md"
+      },
+      "projectChangelogs": false
+    },
+    "git": {
+      "commit": true,
+      "tag": true,
+      "commitMessage": "chore(release): v{version}"
+    }
+  }
+}

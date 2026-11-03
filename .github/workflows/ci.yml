@@ -20,34 +20,11 @@ jobs:
     name: Lint, test & build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Install mise
-        run: |
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "$HOME/.local/share/mise/shims" >> "$GITHUB_PATH"
-
-      - name: Install tools (node, yarn)
-        run: |
-          mise --version
-          mise trust
-          mise install
-          mise ls
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.yarn/berry/cache
-            .nx/cache
-          key: ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-
-            ${{ runner.os }}-yarn-nx-
-
-      - run: mise run init
+      - uses: ./.github/actions/setup
 
       - name: Lint, type-check and test
         run: |
@@ -69,34 +46,11 @@ jobs:
       BRANCH_NAME: ${{ github.ref_name }}
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Install mise
-        run: |
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "$HOME/.local/share/mise/shims" >> "$GITHUB_PATH"
-
-      - name: Install tools (node, yarn)
-        run: |
-          mise --version
-          mise trust
-          mise install
-          mise ls
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.yarn/berry/cache
-            .nx/cache
-          key: ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-nx-${{ hashFiles('yarn.lock') }}-
-            ${{ runner.os }}-yarn-nx-
-
-      - run: mise run init
+      - uses: ./.github/actions/setup
 
       - name: Configure git and image name
         run: |
@@ -104,7 +58,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/backstage" >> "$GITHUB_ENV"
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

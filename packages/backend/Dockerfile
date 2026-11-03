@@ -17,6 +17,9 @@
 
 FROM node:24-trixie-slim
 
+LABEL org.opencontainers.image.source="https://github.com/jbadeau/backstage"
+LABEL org.opencontainers.image.description="Backstage developer portal"
+
 # Install sqlite3 dependencies. You can skip this if you don't use sqlite3 in the image,
 # in which case you should also move better-sqlite3 to "devDependencies" in package.json.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
